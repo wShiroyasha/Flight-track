@@ -36,9 +36,9 @@ python -m pip install -r requirements.txt
 Create a `.env` file in the project root with the database and authentication settings:
 
 ```env
-DATABASE_HOSTNAME=localhost
+DATABASE_HOSTNAME=your-database-host
 DATABASE_PORT=5432
-DATABASE_USERNAME=postgres
+DATABASE_USERNAME=your-database-username
 DATABASE_PASSWORD=your-database-password
 DATABASE_NAME=flight_tracker
 
@@ -49,6 +49,8 @@ ACCESS_TOKEN_EXPIRE_MINUTES=30
 SERPAPI_KEY=your-serpapi-key
 PRICE_CHECK_INTERVAL_MINUTES=60
 ```
+
+For a PostgreSQL server running on your own computer, use `localhost` as the database host.
 
 The database must exist before running the migrations. For example, in `psql`:
 

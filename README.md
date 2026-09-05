@@ -89,6 +89,8 @@ python -m alembic upgrade head
 | `POST` | `/users` | No | Create a user |
 | `POST` | `/login` | No | Obtain a bearer access token |
 | `POST` | `/flights/track` | Bearer token | Search for and save a flight |
+| `GET` | `/flights` | Bearer token | List the current user's tracked flights and price history |
+| `GET` | `/flights/{flight_id}/history` | Bearer token | View price history for one tracked flight |
 | `DELETE` | `/flights/{flight_id}` | Bearer token | Delete one of the current user's flights |
 
 For `/login`, send form fields named `username` and `password`. The username is the registered email address.

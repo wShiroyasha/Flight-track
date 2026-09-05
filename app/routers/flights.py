@@ -2,70 +2,13 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.orm import Session
 
 from .. import models, schemas, oauth2
 from ..database import get_db
 from ..services.flight_provider import search_flight
 
 router = APIRouter()
-
-
-def _flight_response(flight: models.Flight) -> dict:
-    return {
-        "origin": flight.origin,
-        "destination": flight.destination,
-        "flight_name": f"{flight.origin} - {flight.destination}",
-        "original_price": flight.original_price,
-        "current_price": flight.current_price,
-        "outbound_departure": flight.outbound_departure,
-        "outbound_arrival": flight.outbound_arrival,
-        "return_departure": flight.return_departure,
-        "return_arrival": flight.return_arrival,
-        "flight_id": flight.id,
-        "price_history": flight.price_history,
-    }
-
-
-@router.get("/flights", response_model=list[schemas.FlightDetails])
-def list_flights(
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(oauth2.get_current_user),
-):
-    flights = db.scalars(
-        select(models.Flight)
-        .where(models.Flight.user_id == current_user.id)
-        .options(selectinload(models.Flight.price_history))
-        .order_by(models.Flight.id)
-    ).all()
-    return [_flight_response(flight) for flight in flights]
-
-
-@router.get(
-    "/flights/{flight_id}/history",
-    response_model=list[schemas.PriceHistoryOut],
-)
-def get_flight_history(
-    flight_id: int,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(oauth2.get_current_user),
-):
-    flight = db.scalar(
-        select(models.Flight).where(
-            models.Flight.id == flight_id,
-            models.Flight.user_id == current_user.id,
-        )
-    )
-    if flight is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Flight not found",
-        )
-    return db.scalars(
-        select(models.PriceHistory)
-        .where(models.PriceHistory.flight_id == flight_id)
-        .order_by(models.PriceHistory.checked_at)
-    ).all()
 
 
 @router.post(

@@ -43,30 +43,14 @@ def _parse_datetime(value: str) -> datetime:
 
 
 def _offer_legs(offer: dict) -> tuple[datetime, datetime]:
-	try:
-		legs = offer.get("flights") or []
-		if not legs:
-			raise LookupError("The flight provider returned no itinerary")
+	legs = offer.get("flights") or []
+	if not legs:
+		raise LookupError("The flight provider returned no itinerary")
 
-		return (
-			_parse_datetime(legs[0]["departure_airport"]["time"]),
-			_parse_datetime(legs[-1]["arrival_airport"]["time"]),
-		)
-	except (KeyError, TypeError, ValueError) as error:
-		raise LookupError("The flight provider returned an invalid itinerary") from error
-
-
-def _offers(results: dict) -> list[dict]:
-	if not isinstance(results, dict):
-		raise LookupError("The flight provider returned an invalid response")
-	return results.get("best_flights") or results.get("other_flights") or []
-
-
-def _offer_price(offer: dict) -> float:
-	try:
-		return float(offer["price"])
-	except (KeyError, TypeError, ValueError) as error:
-		raise LookupError("The flight provider returned an invalid price") from error
+	return (
+		_parse_datetime(legs[0]["departure_airport"]["time"]),
+		_parse_datetime(legs[-1]["arrival_airport"]["time"]),
+	)
 
 
 def _provider_error_message(error: serpapi.HTTPError) -> str:
@@ -109,7 +93,7 @@ def search_flight(
 		raise LookupError(
 			f"The flight provider rejected the search: {_provider_error_message(error)}"
 		) from error
-	offers = _offers(results)
+	offers = results.get("best_flights") or results.get("other_flights") or []
 	if not offers:
 		raise LookupError("No flights were found")
 
@@ -148,14 +132,18 @@ def search_flight(
 					f"{_provider_error_message(fallback_error)}"
 				) from fallback_error
 
-		return_offers = _offers(return_results)
+		return_offers = (
+			return_results.get("best_flights")
+			or return_results.get("other_flights")
+			or []
+		)
 		if not return_offers:
 			raise LookupError("No return flights were found")
 		return_departure, return_arrival = _offer_legs(return_offers[0])
 
 	return {
-		"original_price": _offer_price(offer),
-		"current_price": _offer_price(offer),
+		"original_price": float(offer["price"]),
+		"current_price": float(offer["price"]),
 		"outbound_departure": outbound_departure,
 		"outbound_arrival": outbound_arrival,
 		"return_departure": return_departure,
